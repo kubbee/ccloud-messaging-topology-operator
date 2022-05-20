@@ -1,0 +1,8 @@
+apiVersion: messages.kubbee.tech/v1alpha1
+kind: KafkaReference
+metadata:
+  name: kafka-reference-connection
+spec:
+  clusterName: demo-kafka 
+  environment: development
+  tenant: kubbee-pay

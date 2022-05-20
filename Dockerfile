@@ -23,13 +23,17 @@ COPY main.go main.go
 COPY api/ api/
 COPY internal/ internal/
 COPY controllers/ controllers/
-COPY service/ service/
+COPY services/ services/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o runner main.go
 
+WORKDIR /
+
 USER root
 
-RUN mkdir /manager && mv /workspace/runner /manager/. && chmod -R 777 /manager
+RUN mkdir /manager
+RUN mv /workspace/runner /manager/.
+RUN chmod -R 777 /manager
 
 CMD ["/manager/runner","-D","FOREGROUND"]

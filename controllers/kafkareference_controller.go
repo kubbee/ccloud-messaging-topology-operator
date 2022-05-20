@@ -71,11 +71,15 @@ func (r *KafkaReferenceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil // implementing the nil in the future
 	}
 
+	logger.Info(">Calls declareClusterReference<")
+
 	return r.declareClusterReference(ctx, kafkaReference)
 }
 
 func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, kr *messagesv1alpha1.KafkaReference) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
+
+	logger.Info(">start declareClusterReference<")
 
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: kr.Name, Namespace: kr.Namespace}, secret)
@@ -87,6 +91,8 @@ func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, 
 			// build and return the error
 			return reconcile.Result{}, gcrError
 		} else {
+
+			logger.Info(">runs declareClusterReference<")
 
 			kafkaClusterSecret := &util.KafkaReferenceSecret{
 				ClusterId:     kReference.ClusterId,
@@ -104,6 +110,7 @@ func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, 
 			return reconcile.Result{}, nil
 		}
 	}
+
 	return reconcile.Result{}, nil
 }
 

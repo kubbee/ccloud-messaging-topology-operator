@@ -1,0 +1,59 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkareferences
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkareferences/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkareferences/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkatopics
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkatopics/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkatopics/status
+  verbs:
+  - get
+  - patch
+  - update

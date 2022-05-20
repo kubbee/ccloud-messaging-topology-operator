@@ -1,8 +1,0 @@
-apiVersion: messages.kubbee.tech/v1alpha1
-kind: KafkaCluster
-metadata:
-  name: kafka-cluster-connection
-spec:
-  clusterName: kubber1 
-  environment: development
-  tenant: kubbee-pay
