@@ -5,4 +5,4 @@ metadata:
 spec:
   clusterName: demo-kafka 
   environment: development
-  tenant: kubbee-pay
+  tenant: fastshop-pay

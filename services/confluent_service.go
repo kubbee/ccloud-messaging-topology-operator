@@ -21,14 +21,23 @@ func GetEnvironments(logger *logr.Logger) (*[]util.Environment, error) {
 	cmd.Stdout = cmdOutput
 
 	if err := cmd.Run(); err != nil {
+
+		output := cmdOutput.Bytes()
+		message, _ := getOutput(output)
+
+		logger.Error(err, message)
 		logger.Error(err, "Error to retrive clonfluent cloud environments")
+
 		return &[]util.Environment{}, err
 	} else {
 		output := cmdOutput.Bytes()
 		message, _ := getOutput(output)
 
 		environments := []util.Environment{}
-		json.Unmarshal([]byte(message), &environments)
+
+		if jErr := json.Unmarshal([]byte(message), &environments); jErr != nil {
+			logger.Error(jErr, "error to parse environment")
+		}
 
 		logger.Info("Existents Environments: " + message)
 

@@ -3,6 +3,5 @@ kind: KafkaTopic
 metadata:
   name: kafkatopic-cadastro-cliente-efetivado
 spec:
-  # TODO(user): Add fields here
   topicName: cadastro-cliente-efetivado
   partitions: 6

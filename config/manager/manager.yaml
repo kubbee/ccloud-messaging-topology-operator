@@ -32,7 +32,7 @@ spec:
         - /manager/runner
         args:
         - --leader-elect
-        image: docker.io/lhsribas/controller:v.0.0.3
+        image: docker.io/lhsribas/controller:v.0.0.4
         name: manager
         securityContext:
           allowPrivilegeEscalation: true

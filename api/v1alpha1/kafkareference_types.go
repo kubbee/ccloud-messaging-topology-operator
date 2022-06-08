@@ -33,6 +33,10 @@ type KafkaReferenceSpec struct {
 	Tenant      string `json:"tenant,omitempty"`
 }
 
+type KakfaClusterResources struct {
+	Namespace string `json:"namespace,omitempty"`
+}
+
 // KafkaReferenceStatus defines the observed state of KafkaReference
 type KafkaReferenceStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster

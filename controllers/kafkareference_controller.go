@@ -63,23 +63,23 @@ func (r *KafkaReferenceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	kafkaReference := &messagesv1alpha1.KafkaReference{}
 
 	if err := r.Get(ctx, req.NamespacedName, kafkaReference); err != nil {
-		return reconcile.Result{}, client.IgnoreNotFound(err)
-	}
+		if k8sErrors.IsNotFound(err) {
+			logger.Info("KafkaReference Not Found.")
 
-	if !kafkaReference.ObjectMeta.DeletionTimestamp.IsZero() {
-		logger.Info("Deleting")
-		return ctrl.Result{}, nil // implementing the nil in the future
+			if !kafkaReference.ObjectMeta.DeletionTimestamp.IsZero() {
+				logger.Info("Was marked for deletion.")
+				return reconcile.Result{}, nil // implementing the nil in the future
+			}
+		}
+		return reconcile.Result{}, nil
 	}
-
-	logger.Info(">Calls declareClusterReference<")
 
 	return r.declareClusterReference(ctx, kafkaReference)
 }
 
 func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, kr *messagesv1alpha1.KafkaReference) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
-
-	logger.Info(">start declareClusterReference<")
+	logger.Info("Start::declareClusterReference")
 
 	secret := &corev1.Secret{}
 	err := r.Get(ctx, types.NamespacedName{Name: kr.Name, Namespace: kr.Namespace}, secret)
@@ -133,6 +133,34 @@ func (r *KafkaReferenceReconciler) generateSecret(krs *util.KafkaReferenceSecret
 		Type:      "kubbee.tech/cluster-connection-reference",
 		Data:      map[string][]byte{"tenant": []byte(krs.Tenant), "clusterId": []byte(krs.ClusterId), "environmentId": []byte(krs.EnvironmentId)},
 		Immutable: &immutable,
+	}
+}
+
+/**
+ * This function is responsible to get the Environment Secret on the namespace;
+ */
+func (r *KafkaReferenceReconciler) readCredentials(ctx context.Context, requestNamespace string, secretName string) (util.ConnectionCredentials, error) {
+	logger := ctrl.LoggerFrom(ctx)
+	logger.Info("Read credentials from cluster")
+
+	secret := &corev1.Secret{}
+
+	if err := r.Get(ctx, types.NamespacedName{Namespace: requestNamespace, Name: secretName}, secret); err != nil {
+		return nil, err
+	}
+
+	return r.readCredentialsFromKubernetesSecret(secret), nil
+}
+
+/**
+ * This function is responsible to ready the content of the secret and return for execute operations with the data
+ */
+func (r *KafkaReferenceReconciler) readCredentialsFromKubernetesSecret(secret *corev1.Secret) *util.ClusterCredentials {
+	return &util.ClusterCredentials{
+		DataContent: map[string][]byte{
+			"environmentName": secret.Data["environmentName"],
+			"environmentId":   secret.Data["environmentId"],
+		},
 	}
 }
 
