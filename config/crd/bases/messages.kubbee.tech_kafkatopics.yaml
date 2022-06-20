@@ -35,6 +35,13 @@ spec:
           spec:
             description: KafkaTopicSpec defines the desired state of KafkaTopic
             properties:
+              kafkaClusterResource:
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
               partitions:
                 format: int32
                 type: integer
@@ -43,6 +50,7 @@ spec:
                   to remove/update
                 type: string
             required:
+            - kafkaClusterResource
             - topicName
             type: object
           status:

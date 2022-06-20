@@ -1,22 +1,33 @@
 package services
 
 import (
-	"errors"
+	"os/exec"
 
 	"github.com/go-logr/logr"
 	util "github.com/kubbee/ccloud-messaging-topology-operator/internal"
 )
 
-func GetTopic(topic *util.NewTopic, logger *logr.Logger) (*util.TopicReference, error) {
+func createNewTopic(topic *util.NewTopic, clusterId string, logger *logr.Logger) (*string, error) {
+	logger.Info("Start::CreateNewTopic")
 
-	logger.Info("Creating a New Topic")
-	selected := SetEnvironment(topic.ClusterReference.EnvironmentId, logger)
+	// generates the topic name
+	topicName := topicNameGenerator(topic.Tenant, topic.Namespace, topic.Topic)
 
-	if selected {
-		logger.Info("The environment was selected")
-		return CreateNewTopic(topic, logger)
+	if isOk, err := existsTopicName(clusterId, topicName); err != nil {
+		logger.Error(err, "error to verify if topic already exists")
+		return &topicName, err
 	} else {
-		logger.Error(errors.New("error to select the environment"), "Error to select the environment")
-		return &util.TopicReference{}, errors.New("error to select the environment")
+		if !isOk {
+			cmd := exec.Command("/bin/confluent", "kafka", "topic", "create", topicName, "--partitions", topic.Partitions, "--cluster", clusterId)
+
+			if err := cmd.Run(); err != nil {
+				logger.Error(err, "Confluent::NewTopic:: Error to run the command to create kafka topic")
+				return &topicName, err
+			} else {
+				return &topicName, nil
+			}
+		} else {
+			return &topicName, nil
+		}
 	}
 }

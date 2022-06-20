@@ -39,11 +39,17 @@ spec:
                 type: string
               environment:
                 type: string
+              kakfaClusterResourceNamespace:
+                properties:
+                  namespace:
+                    type: string
+                type: object
               tenant:
                 type: string
             required:
             - clusterName
             - environment
+            - kakfaClusterResourceNamespace
             type: object
           status:
             description: KafkaReferenceStatus defines the observed state of KafkaReference

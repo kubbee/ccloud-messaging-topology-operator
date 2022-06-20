@@ -60,6 +60,7 @@ type KafkaReferenceReconciler struct {
 func (r *KafkaReferenceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
 
+	//
 	kafkaReference := &messagesv1alpha1.KafkaReference{}
 
 	if err := r.Get(ctx, req.NamespacedName, kafkaReference); err != nil {
@@ -77,47 +78,67 @@ func (r *KafkaReferenceReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return r.declareClusterReference(ctx, kafkaReference)
 }
 
-func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, kr *messagesv1alpha1.KafkaReference) (ctrl.Result, error) {
+func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, ccloudKafkaReference *messagesv1alpha1.KafkaReference) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
 	logger.Info("Start::declareClusterReference")
 
-	secret := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: kr.Name, Namespace: kr.Namespace}, secret)
+	/*
+	 * Names where are deploy the CRD of Environment, Kafka and SchemaRegistry
+	 */
+	var clusterResources string
 
-	if err != nil && k8sErrors.IsNotFound(err) {
+	if ccloudKafkaReference.Spec.KakfaClusterResourceNamespace.Namespace == "" {
+		clusterResources = "ccloud-cluster-operator-system"
+	} else {
+		clusterResources = ccloudKafkaReference.Spec.KakfaClusterResourceNamespace.Namespace
+	}
 
-		if kReference, gcrError := services.GetClusterReference(kr, &logger); gcrError != nil {
-			logger.Error(gcrError, "Error to get Clueter Reference")
-			// build and return the error
-			return reconcile.Result{}, gcrError
-		} else {
+	if connectionCreds, e := r.readCredentials(ctx, clusterResources, ccloudKafkaReference.Spec.Environment); e != nil {
+		logger.Error(e, "Error to read environment secret into namespace: "+clusterResources)
+	} else {
 
-			logger.Info(">runs declareClusterReference<")
+		environmentId, eIdOk := connectionCreds.Data("environmentId")
 
-			kafkaClusterSecret := &util.KafkaReferenceSecret{
-				ClusterId:     kReference.ClusterId,
-				EnvironmentId: kReference.EnvironmentId,
-				Tenant:        kr.Spec.Tenant,
+		if eIdOk {
+
+			secret := &corev1.Secret{}
+
+			err := r.Get(ctx, types.NamespacedName{Name: ccloudKafkaReference.Name, Namespace: ccloudKafkaReference.Namespace}, secret)
+
+			if err != nil && k8sErrors.IsNotFound(err) {
+
+				if clusterId, gcrError := services.BuildKafkaReference(string(environmentId), ccloudKafkaReference.ClusterName, &logger); gcrError == nil {
+
+					kafkaReferenceSecret := &util.KafkaReferenceSecret{
+						EnvironmentId: string(environmentId),
+						Tenant:        ccloudKafkaReference.Spec.Tenant,
+						ClusterId:     *clusterId,
+					}
+
+					err = r.Create(ctx, r.generateSecret(kafkaReferenceSecret, ccloudKafkaReference))
+
+					if err != nil {
+						logger.Error(err, "error to create cluster reference secret")
+						return reconcile.Result{}, err
+					}
+
+					return reconcile.Result{}, nil
+
+				} else {
+					logger.Error(gcrError, "Error to get Clueter Reference")
+					return reconcile.Result{}, gcrError
+				}
 			}
-
-			err = r.Create(ctx, r.generateSecret(kafkaClusterSecret, kr))
-
-			if err != nil {
-				logger.Error(err, "error to create cluster reference secret")
-				return reconcile.Result{}, err
-			}
-
-			return reconcile.Result{}, nil
 		}
 	}
 
 	return reconcile.Result{}, nil
 }
 
-func (r *KafkaReferenceReconciler) generateSecret(krs *util.KafkaReferenceSecret, kr *messagesv1alpha1.KafkaReference) *corev1.Secret {
+func (r *KafkaReferenceReconciler) generateSecret(krs *util.KafkaReferenceSecret, kafkaReference *messagesv1alpha1.KafkaReference) *corev1.Secret {
 
 	var labels = make(map[string]string)
-	labels["name"] = kr.Name
+	labels["name"] = kafkaReference.Name
 	labels["owner"] = "ccloud-messaging-topology-operator"
 	labels["controller"] = "kafkareference_controller"
 
@@ -126,8 +147,8 @@ func (r *KafkaReferenceReconciler) generateSecret(krs *util.KafkaReferenceSecret
 	// create and return secret object.
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      kr.Name,
-			Namespace: kr.Namespace,
+			Name:      kafkaReference.Name,
+			Namespace: kafkaReference.Namespace,
 			Labels:    labels,
 		},
 		Type:      "kubbee.tech/cluster-connection-reference",

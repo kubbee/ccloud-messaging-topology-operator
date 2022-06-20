@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -79,15 +78,16 @@ func (r *KafkaTopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	KafkaTopic := &messagesv1alpha1.KafkaTopic{}
 
 	if err := r.Get(ctx, req.NamespacedName, KafkaTopic); err != nil {
-		return reconcile.Result{}, client.IgnoreNotFound(err)
-	}
+		if k8sErrors.IsNotFound(err) {
+			logger.Info("KafkaTopic Not Found.")
 
-	if !KafkaTopic.ObjectMeta.DeletionTimestamp.IsZero() {
-		logger.Info("Deleting")
-		return ctrl.Result{}, nil // implementing the nil in the future
+			if !KafkaTopic.ObjectMeta.DeletionTimestamp.IsZero() {
+				logger.Info("Was marked for deletion.")
+				return reconcile.Result{}, nil // implementing the nil in the future
+			}
+		}
+		return reconcile.Result{}, nil
 	}
-
-	logger.Info(">Calls declareKafkaTopic<")
 
 	return r.declareKafkaTopic(ctx, req, KafkaTopic)
 }
@@ -95,55 +95,89 @@ func (r *KafkaTopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *KafkaTopicReconciler) declareKafkaTopic(ctx context.Context, req ctrl.Request, kafkaTopic *messagesv1alpha1.KafkaTopic) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
 
-	if connectionCreds, cErr := r.getSecret(ctx, req.NamespacedName.Namespace, "kafka-reference-connection"); cErr != nil {
-		logger.Error(cErr, "Failed to get Secret")
-		return reconcile.Result{}, cErr
+	if connCreds, e := r.readCredentials(ctx, req.NamespacedName.Namespace, kafkaTopic.Spec.KafkaClusterResource.Name); e != nil {
+		logger.Error(e, "Failed to get Secret")
+		return reconcile.Result{}, e
 	} else {
 
 		cf := &corev1.ConfigMap{}
 		getError := r.Get(ctx, types.NamespacedName{Name: kafkaTopic.Name, Namespace: kafkaTopic.Namespace}, cf)
 
 		if getError != nil && k8sErrors.IsNotFound(getError) { //Create ConfigMap
+			logger.Info("Creating kafka topic")
 
-			logger.Info("Trying to create kafka topic")
+			// Read secret attributes
+			tenant, isTenantOk := connCreds.Data("tenant")
+			clusterId, isClusterIdOk := connCreds.Data("clusterId")
+			environmentId, isEnvironmentIdOk := connCreds.Data("environmentId")
 
-			tenant, isTenantOk := connectionCreds.Data("tenant")
-			clusterId, isClusterIdOk := connectionCreds.Data("clusterId")
-			environmentId, isEnvironmentIdOk := connectionCreds.Data("environmentId")
-
+			// verify if secrets is ok
 			if isTenantOk && isClusterIdOk && isEnvironmentIdOk {
 
 				logger.Info("Success to get secret values")
 
-				clusterReference := util.ClusterReference{
-					ClusterId:     string(clusterId),
-					EnvironmentId: string(environmentId),
-				}
-
 				Partitions := strconv.FormatInt(int64(kafkaTopic.Spec.Partitions), 10)
-				logger.Info("Converting the partitions was converted to string? " + Partitions)
 
 				newTopic := &util.NewTopic{
-					Tenant:           string(tenant),
-					Topic:            kafkaTopic.Spec.TopicName,
-					Partitions:       Partitions,
-					Namespace:        req.NamespacedName.Namespace,
-					ClusterReference: clusterReference,
+					Tenant:     string(tenant),
+					Topic:      kafkaTopic.Spec.TopicName,
+					Partitions: Partitions,
+					Namespace:  req.NamespacedName.Namespace,
 				}
 
-				if topicRefence, topicError := services.GetTopic(newTopic, &logger); topicError != nil {
-					return reconcile.Result{}, topicError
+				if topicName, err := services.BuildTopic(newTopic, string(environmentId), string(clusterId), &logger); err != nil {
+					logger.Error(err, "error to create topic")
+					return reconcile.Result{}, err
 				} else {
-					cfg := r.createConfigMap(topicRefence, kafkaTopic)
 
-					ccmError := r.Create(ctx, cfg)
+					kafkaSecretName := "kafka-" + string(tenant)
+					connCredsKafka, kErr := r.readCredentialsKafka(ctx, kafkaTopic.Spec.KafkaClusterResource.Name, kafkaSecretName)
 
-					if ccmError != nil {
-						logger.Error(ccmError, "error to create configmap")
-						return reconcile.Result{}, ccmError
+					schemaRegistryName := "schemaregistry-" + string(tenant)
+					connCredsSR, SRErr := r.readCredentialsSchemaRegistry(ctx, kafkaTopic.Spec.KafkaClusterResource.Name, schemaRegistryName)
+
+					if kErr != nil && SRErr != nil {
+						logger.Error(kErr, "error to read kafka secret")
+						logger.Error(SRErr, "error to read schemaregistry secret")
+						return reconcile.Result{}, errors.New("error to read kafka or schemaregistry secret from cluster")
 					}
 
-					logger.Info("ConfigMap created", "Name", "Namespace", kafkaTopic.Name, kafkaTopic.Namespace)
+					kafkaKey, isOk_KK := connCredsKafka.Data("ApiKey")
+					kafkaSecret, isOk_KS := connCredsKafka.Data("ApiSecret")
+					kafkaEndpoint, isOK_KE := connCredsKafka.Data("KafkaEndpoint")
+
+					if !isOK_KE && !isOk_KK && !isOk_KS {
+						logger.Info("error to read kafka secrets")
+						return reconcile.Result{}, errors.New("error to read kafka secrets")
+					}
+
+					sRKey, isOk_SRK := connCredsSR.Data("ApiKey")
+					sRSecret, isOk_SRS := connCredsSR.Data("ApiSecret")
+					sREndpoint, isOk_SRE := connCredsSR.Data("SREndpoint")
+
+					if !isOk_SRK && !isOk_SRS && !isOk_SRE {
+						logger.Info("error to read schemaregistry secrets")
+						return reconcile.Result{}, errors.New("error to read schemaregistry secrets")
+					}
+
+					configMapKafka := &util.ConfigMapKafka{
+						TopicName:               *topicName,
+						SchemaRegistryURL:       string(sREndpoint),
+						SchemaRegistryApiKey:    string(sRKey),
+						SchemaRegistryApiSecret: string(sRSecret),
+						KafkaURL:                string(kafkaEndpoint),
+						KafkaApiKey:             string(kafkaKey),
+						KafkaApiSecret:          string(kafkaSecret),
+					}
+
+					cfg := createConfigMap(configMapKafka, kafkaTopic)
+
+					if e := r.Create(ctx, cfg); e != nil {
+						logger.Error(e, "error to create configmap")
+						return reconcile.Result{}, e
+					}
+
+					logger.Info("success the topic was configured")
 					return reconcile.Result{}, nil
 				}
 			}
@@ -153,22 +187,10 @@ func (r *KafkaTopicReconciler) declareKafkaTopic(ctx context.Context, req ctrl.R
 	return ctrl.Result{}, nil
 }
 
-func (r *KafkaTopicReconciler) getSecret(ctx context.Context, requestNamespace string, secretName string) (ConnectionCredentials, error) {
-	logger := ctrl.LoggerFrom(ctx)
-	logger.Info("getting secret")
-	secret := &corev1.Secret{}
-
-	if err := r.Get(ctx, types.NamespacedName{Namespace: requestNamespace, Name: secretName}, secret); err != nil {
-		return nil, err
-	}
-
-	return readCredentialsFromKubernetesSecret(secret)
-}
-
-func (r *KafkaTopicReconciler) createConfigMap(topicReference *util.TopicReference, kt *messagesv1alpha1.KafkaTopic) *corev1.ConfigMap {
+func createConfigMap(configMapKafka *util.ConfigMapKafka, kafkaTopic *messagesv1alpha1.KafkaTopic) *corev1.ConfigMap {
 
 	var labels = make(map[string]string)
-	labels["name"] = kt.Name
+	labels["name"] = kafkaTopic.Name
 	labels["owner"] = "ccloud-messaging-topology-operator"
 	labels["controller"] = "kafkatopic_controller"
 
@@ -176,18 +198,18 @@ func (r *KafkaTopicReconciler) createConfigMap(topicReference *util.TopicReferen
 
 	mapper := make(map[string]string)
 
-	mapper["topic.name"] = topicReference.Topic
-	mapper["schema_registry.url"] = topicReference.SchemaRegistry.EndpointUrl
-	mapper["schema_registry.api"] = topicReference.SchemaRegistryApiKey.Api
-	mapper["schema_registry.secret"] = topicReference.SchemaRegistryApiKey.Secret
-	mapper["kafka.url"] = topicReference.ClusterKafka.Endpoint
-	mapper["kafka.api"] = topicReference.KafkaApiKey.Api
-	mapper["kafka.secret"] = topicReference.KafkaApiKey.Secret
+	mapper["topic_name"] = configMapKafka.TopicName
+	mapper["schema_registry_url"] = configMapKafka.SchemaRegistryURL
+	mapper["schema_registry_api"] = configMapKafka.SchemaRegistryApiKey
+	mapper["schema_registry_secret"] = configMapKafka.SchemaRegistryApiSecret
+	mapper["kafka_url"] = configMapKafka.KafkaURL
+	mapper["kafka_api"] = configMapKafka.KafkaApiKey
+	mapper["kafka_secret"] = configMapKafka.KafkaApiSecret
 
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      kt.Name,
-			Namespace: kt.Namespace,
+			Name:      kafkaTopic.Name,
+			Namespace: kafkaTopic.Namespace,
 			Labels:    labels,
 		},
 		Data:      mapper,
@@ -195,18 +217,91 @@ func (r *KafkaTopicReconciler) createConfigMap(topicReference *util.TopicReferen
 	}
 }
 
-func readCredentialsFromKubernetesSecret(secret *corev1.Secret) (ConnectionCredentials, error) {
-	if secret == nil {
-		return nil, fmt.Errorf("unable to retrieve information from Kubernetes secret %s: %w", secret.Name, errors.New("nil secret"))
+/*
+ *
+ */
+func (r *KafkaTopicReconciler) readCredentials(ctx context.Context, requestNamespace string, secretName string) (util.ConnectionCredentials, error) {
+	logger := ctrl.LoggerFrom(ctx)
+	logger.Info("Read credentials from cluster")
+
+	secret := &corev1.Secret{}
+
+	if err := r.Get(ctx, types.NamespacedName{Namespace: requestNamespace, Name: secretName}, secret); err != nil {
+		return nil, err
 	}
 
-	return ClusterCredentials{
-		data: map[string][]byte{
+	return readCredentialsFromKubernetesSecret(secret), nil
+}
+
+/*
+ *
+ */
+func readCredentialsFromKubernetesSecret(secret *corev1.Secret) *util.ClusterCredentials {
+	return &util.ClusterCredentials{
+		DataContent: map[string][]byte{
 			"tenant":        secret.Data["tenant"],
 			"clusterId":     secret.Data["clusterId"],
 			"environmentId": secret.Data["environmentId"],
 		},
-	}, nil
+	}
+}
+
+/**
+ * This function is responsible to get the Environment Secret on the namespace;
+ */
+func (r *KafkaTopicReconciler) readCredentialsKafka(ctx context.Context, requestNamespace string, secretName string) (util.ConnectionCredentials, error) {
+	logger := ctrl.LoggerFrom(ctx)
+	logger.Info("Read credentials kafka from cluster")
+
+	secret := &corev1.Secret{}
+
+	if err := r.Get(ctx, types.NamespacedName{Namespace: requestNamespace, Name: secretName}, secret); err != nil {
+		return nil, err
+	}
+
+	return readCredentialsKafkaFromKubernetesSecret(secret), nil
+}
+
+/**
+ * This function is responsible to ready the content of the secret and return for execute operations with the data
+ */
+func readCredentialsKafkaFromKubernetesSecret(secret *corev1.Secret) *util.ClusterCredentials {
+	return &util.ClusterCredentials{
+		DataContent: map[string][]byte{
+			"ApiKey":        secret.Data["ApiKey"],
+			"ApiSecret":     secret.Data["ApiSecret"],
+			"KafkaEndpoint": secret.Data["KafkaEndpoint"],
+		},
+	}
+}
+
+/**
+ * This function is responsible to get the Environment Secret on the namespace;
+ */
+func (r *KafkaTopicReconciler) readCredentialsSchemaRegistry(ctx context.Context, requestNamespace string, secretName string) (util.ConnectionCredentials, error) {
+	logger := ctrl.LoggerFrom(ctx)
+	logger.Info("Read credentials schemaregistry from cluster")
+
+	secret := &corev1.Secret{}
+
+	if err := r.Get(ctx, types.NamespacedName{Namespace: requestNamespace, Name: secretName}, secret); err != nil {
+		return nil, err
+	}
+
+	return readCredentialsSchemaRegistryFromKubernetesSecret(secret), nil
+}
+
+/**
+ * This function is responsible to ready the content of the secret and return for execute operations with the data
+ */
+func readCredentialsSchemaRegistryFromKubernetesSecret(secret *corev1.Secret) *util.ClusterCredentials {
+	return &util.ClusterCredentials{
+		DataContent: map[string][]byte{
+			"ApiKey":     secret.Data["ApiKey"],
+			"ApiSecret":  secret.Data["ApiSecret"],
+			"SREndpoint": secret.Data["SREndpoint"],
+		},
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
