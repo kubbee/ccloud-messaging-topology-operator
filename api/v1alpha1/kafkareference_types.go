@@ -28,14 +28,10 @@ type KafkaReferenceSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName                   string                        `json:"clusterName"`
-	Environment                   string                        `json:"environment"`
-	Tenant                        string                        `json:"tenant,omitempty"`
-	KakfaClusterResourceNamespace KakfaClusterResourceNamespace `json:"kakfaClusterResourceNamespace"`
-}
-
-type KakfaClusterResourceNamespace struct {
-	Namespace string `json:"namespace,omitempty"`
+	ClusterName          string               `json:"clusterName"`
+	Environment          string               `json:"environment"`
+	Tenant               string               `json:"tenant,omitempty"`
+	KafkaClusterResource KafkaClusterResource `json:"kafkaClusterResource"`
 }
 
 // KafkaReferenceStatus defines the observed state of KafkaReference

@@ -39,7 +39,7 @@ spec:
                 type: string
               environment:
                 type: string
-              kakfaClusterResourceNamespace:
+              kafkaClusterResource:
                 properties:
                   namespace:
                     type: string
@@ -49,7 +49,7 @@ spec:
             required:
             - clusterName
             - environment
-            - kakfaClusterResourceNamespace
+            - kafkaClusterResource
             type: object
           status:
             description: KafkaReferenceStatus defines the observed state of KafkaReference

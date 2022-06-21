@@ -87,10 +87,10 @@ func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, 
 	 */
 	var clusterResources string
 
-	if ccloudKafkaReference.Spec.KakfaClusterResourceNamespace.Namespace == "" {
+	if ccloudKafkaReference.Spec.KafkaClusterResource.Namespace == "" {
 		clusterResources = "ccloud-cluster-operator-system"
 	} else {
-		clusterResources = ccloudKafkaReference.Spec.KakfaClusterResourceNamespace.Namespace
+		clusterResources = ccloudKafkaReference.Spec.KafkaClusterResource.Namespace
 	}
 
 	if connectionCreds, e := r.readCredentials(ctx, clusterResources, ccloudKafkaReference.Spec.Environment); e != nil {

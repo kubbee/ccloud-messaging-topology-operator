@@ -131,10 +131,10 @@ func (r *KafkaTopicReconciler) declareKafkaTopic(ctx context.Context, req ctrl.R
 				} else {
 
 					kafkaSecretName := "kafka-" + string(tenant)
-					connCredsKafka, kErr := r.readCredentialsKafka(ctx, kafkaTopic.Spec.KafkaClusterResource.Name, kafkaSecretName)
+					connCredsKafka, kErr := r.readCredentialsKafka(ctx, kafkaTopic.Spec.KafkaClusterResource.Namespace, kafkaSecretName)
 
 					schemaRegistryName := "schemaregistry-" + string(tenant)
-					connCredsSR, SRErr := r.readCredentialsSchemaRegistry(ctx, kafkaTopic.Spec.KafkaClusterResource.Name, schemaRegistryName)
+					connCredsSR, SRErr := r.readCredentialsSchemaRegistry(ctx, kafkaTopic.Spec.KafkaClusterResource.Namespace, schemaRegistryName)
 
 					if kErr != nil && SRErr != nil {
 						logger.Error(kErr, "error to read kafka secret")

@@ -35,20 +35,12 @@ type KafkaTopicSpec struct {
 	KafkaReferenceResource KafkaReferenceResource `json:"kafkaReferenceResource"`
 }
 
-type KafkaClusterResource struct {
-	Name string `json:"name"`
-}
-
 // KafkaTopicStatus defines the observed state of KafkaTopic
 type KafkaTopicStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	ObservedGeneration int64       `json:"observedGeneration,omitempty"`
 	Conditions         []Condition `json:"conditions,omitempty"`
-}
-
-type KafkaReferenceResource struct {
-	Name string `json:"name"`
 }
 
 //+kubebuilder:object:root=true

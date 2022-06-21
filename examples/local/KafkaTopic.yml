@@ -5,3 +5,7 @@ metadata:
 spec:
   topicName: cadastro-cliente-efetivado
   partitions: 6
+  kafkaClusterResource: 
+    namespace: ccloud-cluster-operator-system
+  kafkaReferenceResource:
+    name: kafkareference-kubbee

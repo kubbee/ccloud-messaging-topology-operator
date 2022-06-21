@@ -32,7 +32,7 @@ spec:
         - /manager/runner
         args:
         - --leader-elect
-        image: docker.io/lhsribas/ccloud-messaging-topology-operator:v0.0.5
+        image: docker.io/lhsribas/ccloud-messaging-topology-operator:v0.0.7
         name: manager
         securityContext:
           allowPrivilegeEscalation: true

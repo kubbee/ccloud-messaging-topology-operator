@@ -6,5 +6,5 @@ spec:
   clusterName: dev 
   environment: kubbee-pay
   tenant: kubbee-pay
-  kakfaClusterResourceNamespace: 
+  kafkaClusterResource: 
     namespace: ccloud-cluster-operator-system

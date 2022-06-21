@@ -37,10 +37,13 @@ spec:
             properties:
               kafkaClusterResource:
                 properties:
+                  namespace:
+                    type: string
+                type: object
+              kafkaReferenceResource:
+                properties:
                   name:
                     type: string
-                required:
-                - name
                 type: object
               partitions:
                 format: int32
@@ -51,6 +54,7 @@ spec:
                 type: string
             required:
             - kafkaClusterResource
+            - kafkaReferenceResource
             - topicName
             type: object
           status:
