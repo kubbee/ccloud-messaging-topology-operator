@@ -1,8 +1,10 @@
 apiVersion: messages.kubbee.tech/v1alpha1
 kind: KafkaReference
 metadata:
-  name: kafka-reference-connection
+  name: kafkareference-kubbee
 spec:
-  clusterName: demo-kafka 
-  environment: development
-  tenant: fastshop-pay
+  clusterName: dev 
+  environment: kubbee-pay
+  tenant: kubbee-pay
+  kakfaClusterResourceNamespace: 
+    namespace: ccloud-cluster-operator-system

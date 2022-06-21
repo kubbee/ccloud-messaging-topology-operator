@@ -6,19 +6,21 @@ import (
 	"github.com/go-logr/logr"
 )
 
-func BuildKafkaReference(environmentId string, clusterName string, logger *logr.Logger) (*string, error) {
+func BuildKafkaReference(environmentId string, clusterName string, logger *logr.Logger) (string, error) {
 	logger.Info("start::BuildKafkaReference")
 
-	if success, err := setEnvironment(environmentId, logger); err != nil {
+	success, err := setEnvironment(environmentId, logger)
+
+	if err != nil {
 		logger.Error(err, "error to select the environment")
-	} else {
-		if *success {
-			return getKafkaCluster(clusterName, logger)
-		}
+		return "", err
 	}
 
-	var blank string = ""
-	err := errors.New("was not possible set the environment")
-
-	return &blank, err
+	if success {
+		return getKafkaCluster(clusterName, logger)
+	} else {
+		e := errors.New("there was an error to select the environment")
+		logger.Error(e, "BuildKafkaReference::"+e.Error())
+		return "", e
+	}
 }

@@ -95,7 +95,7 @@ func (r *KafkaTopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *KafkaTopicReconciler) declareKafkaTopic(ctx context.Context, req ctrl.Request, kafkaTopic *messagesv1alpha1.KafkaTopic) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
 
-	if connCreds, e := r.readCredentials(ctx, req.NamespacedName.Namespace, kafkaTopic.Spec.KafkaClusterResource.Name); e != nil {
+	if connCreds, e := r.readCredentials(ctx, req.NamespacedName.Namespace, kafkaTopic.Spec.KafkaReferenceResource.Name); e != nil {
 		logger.Error(e, "Failed to get Secret")
 		return reconcile.Result{}, e
 	} else {

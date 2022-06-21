@@ -107,12 +107,12 @@ func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, 
 
 			if err != nil && k8sErrors.IsNotFound(err) {
 
-				if clusterId, gcrError := services.BuildKafkaReference(string(environmentId), ccloudKafkaReference.ClusterName, &logger); gcrError == nil {
+				if clusterId, gcrError := services.BuildKafkaReference(string(environmentId), ccloudKafkaReference.Spec.ClusterName, &logger); gcrError == nil {
 
 					kafkaReferenceSecret := &util.KafkaReferenceSecret{
 						EnvironmentId: string(environmentId),
 						Tenant:        ccloudKafkaReference.Spec.Tenant,
-						ClusterId:     *clusterId,
+						ClusterId:     clusterId,
 					}
 
 					err = r.Create(ctx, r.generateSecret(kafkaReferenceSecret, ccloudKafkaReference))

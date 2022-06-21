@@ -29,9 +29,10 @@ type KafkaTopicSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of KafkaTopic. Edit kafkatopic_types.go to remove/update
-	TopicName            string               `json:"topicName"`
-	Partitions           int32                `json:"partitions,omitempty"`
-	KafkaClusterResource KafkaClusterResource `json:"kafkaClusterResource"`
+	TopicName              string                 `json:"topicName"`
+	Partitions             int32                  `json:"partitions,omitempty"`
+	KafkaClusterResource   KafkaClusterResource   `json:"kafkaClusterResource"`
+	KafkaReferenceResource KafkaReferenceResource `json:"kafkaReferenceResource"`
 }
 
 type KafkaClusterResource struct {
@@ -44,6 +45,10 @@ type KafkaTopicStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	ObservedGeneration int64       `json:"observedGeneration,omitempty"`
 	Conditions         []Condition `json:"conditions,omitempty"`
+}
+
+type KafkaReferenceResource struct {
+	Name string `json:"name"`
 }
 
 //+kubebuilder:object:root=true
