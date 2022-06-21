@@ -34,6 +34,15 @@ spec:
         - --leader-elect
         image: docker.io/lhsribas/ccloud-messaging-topology-operator:v0.0.7
         name: manager
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "/manager/setup"]
+        env:
+        - name: CCLOUD_EMAIL
+          value: put-the-email-here
+        - name: CCLOUD_PASSWORD
+          value: put-the-password-here
         securityContext:
           allowPrivilegeEscalation: true
         livenessProbe:
