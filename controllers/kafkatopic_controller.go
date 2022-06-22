@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -196,15 +197,20 @@ func createConfigMap(configMapKafka *util.ConfigMapKafka, kafkaTopic *messagesv1
 
 	var immutable bool = true
 
+	/*
+	 *reaplce name - to _
+	 */
+	variable := strings.ReplaceAll(kafkaTopic.Name, "-", "_")
+
 	mapper := make(map[string]string)
 
-	mapper["topic_name"] = configMapKafka.TopicName
-	mapper["schema_registry_url"] = configMapKafka.SchemaRegistryURL
-	mapper["schema_registry_api"] = configMapKafka.SchemaRegistryApiKey
-	mapper["schema_registry_secret"] = configMapKafka.SchemaRegistryApiSecret
-	mapper["kafka_url"] = configMapKafka.KafkaURL
-	mapper["kafka_api"] = configMapKafka.KafkaApiKey
-	mapper["kafka_secret"] = configMapKafka.KafkaApiSecret
+	mapper[variable+"_topic_name"] = configMapKafka.TopicName
+	mapper[variable+"_schema_registry_url"] = configMapKafka.SchemaRegistryURL
+	mapper[variable+"_schema_registry_api"] = configMapKafka.SchemaRegistryApiKey
+	mapper[variable+"_schema_registry_secret"] = configMapKafka.SchemaRegistryApiSecret
+	mapper[variable+"_kafka_url"] = configMapKafka.KafkaURL
+	mapper[variable+"_kafka_api"] = configMapKafka.KafkaApiKey
+	mapper[variable+"_kafka_secret"] = configMapKafka.KafkaApiSecret
 
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
