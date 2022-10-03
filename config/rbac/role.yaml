@@ -8,6 +8,84 @@ rules:
 - apiGroups:
   - messages.kubbee.tech
   resources:
+  - kafkaacls
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaacls/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaacls/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaconsumers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaconsumers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaconsumers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaproducers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaproducers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaproducers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
   - kafkareferences
   verbs:
   - create
@@ -27,6 +105,32 @@ rules:
   - messages.kubbee.tech
   resources:
   - kafkareferences/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaserviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaserviceaccounts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaserviceaccounts/status
   verbs:
   - get
   - patch

@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -36,35 +37,41 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// KafkaTopicReconciler reconciles a KafkaTopic object
-type KafkaTopicReconciler struct {
+// KafkaProducerReconciler reconciles a KafkaProducer object
+type KafkaProducerReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkatopics,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkatopics/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkatopics/finalizers,verbs=update
+type ccdloudSecretType struct {
+	Cluster        string
+	Kafka          string
+	SchemaRegistry string
+}
+
+//+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkaproducers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkaproducers/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkaproducers/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the KafkaTopic object against the actual cluster state, and then
+// the KafkaProducer object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
-func (r *KafkaTopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *KafkaProducerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
 
-	kafkaTopic := &messagesv1alpha1.KafkaTopic{}
+	kafkaProducer := &messagesv1alpha1.KafkaProducer{}
 
-	if err := r.Get(ctx, req.NamespacedName, kafkaTopic); err != nil {
+	if err := r.Get(ctx, req.NamespacedName, kafkaProducer); err != nil {
 		if k8sErrors.IsNotFound(err) {
 			logger.Info("KafkaTopic Not Found.")
 
-			if !kafkaTopic.ObjectMeta.DeletionTimestamp.IsZero() {
+			if !kafkaProducer.ObjectMeta.DeletionTimestamp.IsZero() {
 				logger.Info("Was marked for deletion.")
 				return reconcile.Result{}, nil // implementing the nil in the future
 			}
@@ -72,16 +79,20 @@ func (r *KafkaTopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return reconcile.Result{}, nil
 	}
 
-	return r.producerTopic(ctx, req, kafkaTopic)
+	if req.NamespacedName.Namespace != kafkaProducer.Namespace {
+		return reconcile.Result{}, errors.New("The Namespace declared is different of Namespace Request.")
+	}
+
+	return r.produceTopic(ctx, req, kafkaProducer)
 }
 
-func (r *KafkaTopicReconciler) producerTopic(ctx context.Context, req ctrl.Request, kafkaTopic *messagesv1alpha1.KafkaTopic) (ctrl.Result, error) {
+func (r *KafkaProducerReconciler) produceTopic(ctx context.Context, req ctrl.Request, kafkaProducer *messagesv1alpha1.KafkaProducer) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
 
-	if connCreds := r.readCredentials(ctx, req.NamespacedName.Namespace, kafkaTopic.Spec.KafkaReferenceResource.Name, 1); connCreds != nil {
+	if connCreds := r.readCredentials(ctx, req.NamespacedName.Namespace, kafkaProducer.Spec.KafkaReferenceResource.Name, 1); connCreds != nil {
 		// Struct configMap
 		configMap := &corev1.ConfigMap{}
-		if getError := r.Get(ctx, types.NamespacedName{Name: kafkaTopic.Name, Namespace: kafkaTopic.Namespace}, configMap); getError != nil {
+		if getError := r.Get(ctx, types.NamespacedName{Name: kafkaProducer.Name, Namespace: kafkaProducer.Namespace}, configMap); getError != nil {
 			if k8sErrors.IsNotFound(getError) {
 				logger.Info("Creating kafka topic")
 				// Read secret attributes
@@ -91,8 +102,8 @@ func (r *KafkaTopicReconciler) producerTopic(ctx context.Context, req ctrl.Reque
 
 							topic := &util.NewTopic{
 								Tenant:     string(tenant),
-								Topic:      kafkaTopic.Spec.TopicName,
-								Partitions: strconv.FormatInt(int64(kafkaTopic.Spec.Partitions), 10),
+								Topic:      kafkaProducer.Spec.Topic,
+								Partitions: strconv.FormatInt(int64(kafkaProducer.Spec.Partitions), 10),
 								Namespace:  req.NamespacedName.Namespace,
 							}
 
@@ -100,9 +111,9 @@ func (r *KafkaTopicReconciler) producerTopic(ctx context.Context, req ctrl.Reque
 								logger.Error(err, "error to create topic")
 								return reconcile.Result{}, err
 							} else {
-								if connCredsKafka := r.readCredentials(ctx, kafkaTopic.Spec.KafkaClusterResource.Namespace, "kafka-"+string(tenant), 2); connCredsKafka != nil {
-									if connCredsSR := r.readCredentials(ctx, kafkaTopic.Spec.KafkaClusterResource.Namespace, "schemaregistry-"+string(tenant), 3); connCredsSR != nil {
-										if cfg, err := business.GetConfigMap(connCredsKafka, connCredsSR, kafkaTopic.Name, kafkaTopic.Namespace, *topic); err != nil {
+								if connCredsKafka := r.readCredentials(ctx, kafkaProducer.Spec.KafkaClusterResource.Namespace, "kafka-"+string(tenant), 2); connCredsKafka != nil {
+									if connCredsSR := r.readCredentials(ctx, kafkaProducer.Spec.KafkaClusterResource.Namespace, "schemaregistry-"+string(tenant), 3); connCredsSR != nil {
+										if cfg, err := business.GetConfigMap(connCredsKafka, connCredsSR, kafkaProducer.Name, kafkaProducer.Namespace, *topic); err != nil {
 										} else {
 
 											if e := r.Create(ctx, cfg); e != nil {
@@ -127,7 +138,7 @@ func (r *KafkaTopicReconciler) producerTopic(ctx context.Context, req ctrl.Reque
 }
 
 // ReadCredentials Get the credentials from namespace
-func (r *KafkaTopicReconciler) readCredentials(ctx context.Context, namespace string, secretName string, secretType int) util.ConnectionCredentials {
+func (r *KafkaProducerReconciler) readCredentials(ctx context.Context, namespace string, secretName string, secretType int) util.ConnectionCredentials {
 	logger := ctrl.LoggerFrom(ctx)
 	logger.Info("Read credentials from cluster")
 
@@ -142,8 +153,8 @@ func (r *KafkaTopicReconciler) readCredentials(ctx context.Context, namespace st
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *KafkaTopicReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *KafkaProducerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&messagesv1alpha1.KafkaTopic{}).
+		For(&messagesv1alpha1.KafkaProducer{}).
 		Complete(r)
 }

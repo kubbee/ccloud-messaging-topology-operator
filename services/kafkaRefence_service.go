@@ -35,7 +35,7 @@ func getKafkaCluster(kafkaClusterName string, logger *logr.Logger) (string, erro
 		clusters := []util.ClusterKafka{}
 		json.Unmarshal([]byte(message), &clusters)
 
-		logger.Info("KafkaClusterName >>>> " + kafkaClusterName)
+		logger.Info("KafkaClusterName >>>> ", kafkaClusterName)
 		for i := 0; i < len(clusters); i++ {
 			if kafkaClusterName == clusters[i].Name {
 				clusterId = clusters[i].Id
@@ -46,7 +46,7 @@ func getKafkaCluster(kafkaClusterName string, logger *logr.Logger) (string, erro
 		if clusterId == "" {
 			// create an error
 			e := errors.New("kafka cluster informed not exists")
-			logger.Error(e, "getKafkaCluster::"+e.Error())
+			logger.Error(e, "getKafkaCluster::", e.Error())
 			return clusterId, e
 		}
 

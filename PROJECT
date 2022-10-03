@@ -25,4 +25,49 @@ resources:
   kind: KafkaTopic
   path: github.com/kubbee/ccloud-messaging-topology-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubbee.tech
+  group: messages
+  kind: KafkaProducer
+  path: github.com/kubbee/ccloud-messaging-topology-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubbee.tech
+  group: messages
+  kind: KafkaConsumer
+  path: github.com/kubbee/ccloud-messaging-topology-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubbee.tech
+  group: messages
+  kind: KafkaServiceAccount
+  path: github.com/kubbee/ccloud-messaging-topology-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubbee.tech
+  group: messages
+  kind: KafkaRBAC
+  path: github.com/kubbee/ccloud-messaging-topology-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubbee.tech
+  group: messages
+  kind: KafkaACL
+  path: github.com/kubbee/ccloud-messaging-topology-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

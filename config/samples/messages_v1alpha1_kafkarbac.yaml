@@ -1,0 +1,6 @@
+apiVersion: messages.kubbee.tech/v1alpha1
+kind: KafkaRBAC
+metadata:
+  name: kafkarbac-sample
+spec:
+  # TODO(user): Add fields here

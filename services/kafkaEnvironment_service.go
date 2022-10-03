@@ -9,7 +9,7 @@ import (
 //
 func setEnvironment(environmentId string, logger *logr.Logger) (bool, error) {
 	logger.Info("start::setEnvironment")
-	logger.Info("environmentId >>>>>> " + environmentId)
+	//logger.Info("environmentId >>>>>> " + environmentId)
 
 	cmd := exec.Command("/bin/confluent", "environment", "use", environmentId)
 

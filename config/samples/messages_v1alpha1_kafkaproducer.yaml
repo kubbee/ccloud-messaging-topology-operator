@@ -1,0 +1,6 @@
+apiVersion: messages.kubbee.tech/v1alpha1
+kind: KafkaProducer
+metadata:
+  name: kafkaproducer-sample
+spec:
+  # TODO(user): Add fields here

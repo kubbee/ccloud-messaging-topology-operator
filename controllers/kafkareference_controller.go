@@ -25,11 +25,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/go-logr/logr"
 	messagesv1alpha1 "github.com/kubbee/ccloud-messaging-topology-operator/api/v1alpha1"
 	util "github.com/kubbee/ccloud-messaging-topology-operator/internal"
 	"github.com/kubbee/ccloud-messaging-topology-operator/services"
-	"k8s.io/client-go/tools/record"
 
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,9 +37,7 @@ import (
 // KafkaReferenceReconciler reconciles a KafkaReference object
 type KafkaReferenceReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Log      logr.Logger
-	Recorder record.EventRecorder
+	Scheme *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkareferences,verbs=get;list;watch;create;update;patch;delete

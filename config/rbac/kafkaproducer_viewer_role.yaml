@@ -1,0 +1,20 @@
+# permissions for end users to view kafkaproducers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kafkaproducer-viewer-role
+rules:
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaproducers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaproducers/status
+  verbs:
+  - get

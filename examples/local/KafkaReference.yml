@@ -1,10 +1,10 @@
 apiVersion: messages.kubbee.tech/v1alpha1
 kind: KafkaReference
 metadata:
-  name: kafkareference-kubbee
+  name: kafkareference-odin
 spec:
-  clusterName: dev 
-  environment: kubbee-pay
-  tenant: kubbee-pay
+  clusterName: devel
+  environment: odin
+  tenant: odin
   kafkaClusterResource: 
     namespace: ccloud-cluster-operator-system

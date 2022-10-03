@@ -1,0 +1,20 @@
+# permissions for end users to view kafkaconsumers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kafkaconsumer-viewer-role
+rules:
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaconsumers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - messages.kubbee.tech
+  resources:
+  - kafkaconsumers/status
+  verbs:
+  - get

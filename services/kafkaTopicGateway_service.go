@@ -17,5 +17,18 @@ func BuildTopic(topic *util.NewTopic, environmentId string, clusterId string, lo
 		return &message, err
 	}
 
-	return createNewTopic(topic, clusterId, logger)
+	return createNewTopic(topic.Tenant, topic.Topic, topic.Namespace, topic.Partitions, clusterId, logger)
+}
+
+func RetrieveTopic(topic *util.ExistentTopic, environmentId string, clusterId string, logger *logr.Logger) (*string, error) {
+	logger.Info("start::RetriveTopic")
+
+	_, err := setEnvironment(environmentId, logger)
+
+	if err != nil {
+		logger.Error(err, "erro to selecet the environment")
+		return &message, err
+	}
+
+	return createNewTopic(topic.Tenant, topic.Topic, topic.Domain, "", clusterId, logger)
 }

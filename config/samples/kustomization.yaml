@@ -2,4 +2,9 @@
 resources:
 - messages_v1alpha1_kafkareference.yaml
 - messages_v1alpha1_kafkatopic.yaml
+- messages_v1alpha1_kafkaproducer.yaml
+- messages_v1alpha1_kafkaconsumer.yaml
+- messages_v1alpha1_kafkaserviceaccount.yaml
+- messages_v1alpha1_kafkarbac.yaml
+- messages_v1alpha1_kafkaacl.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

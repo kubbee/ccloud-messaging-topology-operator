@@ -13,6 +13,12 @@ type NewTopic struct {
 	Partitions string `json:"partitions"`
 }
 
+type ExistentTopic struct {
+	Tenant string `json:"tenant"`
+	Domain string `json:"domain"`
+	Topic  string `json:"topic"`
+}
+
 type ClusterKafka struct {
 	Id           string `json:"id"`            //"id": "lkc-57qx6n",
 	Name         string `json:"name"`          //"name": "demo-kafka",
@@ -36,4 +42,17 @@ type ConfigMapKafka struct {
 	KafkaURL                string
 	KafkaApiKey             string
 	KafkaApiSecret          string
+}
+
+/*
+ *{
+ *  "id": "sa-xmvjm1",
+ *  "name": "CadastralServiceAccount",
+ *  "description": "This is a text"
+ *}
+ */
+type ServiceAccount struct {
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }
