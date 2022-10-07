@@ -20,7 +20,7 @@ func createServiceAccount(sa, description string, logger *logr.Logger) (*util.Se
 	cmd.Stdout = cmdOutput
 
 	if err := cmd.Run(); err != nil {
-		logger.Error(err, "error to create service account ", sa)
+		logger.Error(err, "error to create service account "+sa)
 		return &util.ServiceAccount{}, err
 	} else {
 
@@ -33,7 +33,7 @@ func createServiceAccount(sa, description string, logger *logr.Logger) (*util.Se
 		serviceAccount := util.ServiceAccount{}
 		json.Unmarshal([]byte(message), &serviceAccount)
 
-		logger.Info("ServiceAccount >>>>>> ", serviceAccount)
+		logger.Info("ServiceAccount was created")
 
 		return &serviceAccount, nil
 	}

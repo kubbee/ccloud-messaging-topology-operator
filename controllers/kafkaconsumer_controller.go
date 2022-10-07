@@ -72,7 +72,7 @@ func (r *KafkaConsumerReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if req.NamespacedName.Namespace != kafkaConsumer.Namespace {
-		return reconcile.Result{}, errors.New("The Namespace declared is different of Namespace Request.")
+		return reconcile.Result{}, errors.New("the namespace declared is different of namespace request")
 	}
 
 	return r.consumeTopic(ctx, req, kafkaConsumer)

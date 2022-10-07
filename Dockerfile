@@ -18,6 +18,7 @@ COPY api/ api/
 COPY internal/ internal/
 COPY controllers/ controllers/
 COPY services/ services/
+COPY cross/ cross/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o runner main.go

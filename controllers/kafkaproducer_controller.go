@@ -80,7 +80,7 @@ func (r *KafkaProducerReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if req.NamespacedName.Namespace != kafkaProducer.Namespace {
-		return reconcile.Result{}, errors.New("The Namespace declared is different of Namespace Request.")
+		return reconcile.Result{}, errors.New("the namespace declared is different of namespace request")
 	}
 
 	return r.produceTopic(ctx, req, kafkaProducer)
