@@ -1,0 +1,22 @@
+/home/lhsribas/Development/git/operators/ccloud-messaging-topology-operator/bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+cd config/manager && /home/lhsribas/Development/git/operators/ccloud-messaging-topology-operator/bin/kustomize edit set image controller=controller:latest
+/home/lhsribas/Development/git/operators/ccloud-messaging-topology-operator/bin/kustomize build config/default | kubectl apply -f -
+namespace/ccloud-messaging-topology-operator-system unchanged
+customresourcedefinition.apiextensions.k8s.io/kafkaacls.messages.kubbee.tech configured
+customresourcedefinition.apiextensions.k8s.io/kafkaconsumers.messages.kubbee.tech configured
+customresourcedefinition.apiextensions.k8s.io/kafkaproducers.messages.kubbee.tech configured
+customresourcedefinition.apiextensions.k8s.io/kafkarbacs.messages.kubbee.tech configured
+customresourcedefinition.apiextensions.k8s.io/kafkareferences.messages.kubbee.tech configured
+customresourcedefinition.apiextensions.k8s.io/kafkaserviceaccounts.messages.kubbee.tech configured
+customresourcedefinition.apiextensions.k8s.io/kafkatopics.messages.kubbee.tech configured
+serviceaccount/ccloud-messaging-topology-operator-controller-manager unchanged
+role.rbac.authorization.k8s.io/ccloud-messaging-topology-operator-leader-election-role unchanged
+clusterrole.rbac.authorization.k8s.io/ccloud-messaging-topology-operator-manager-role configured
+clusterrole.rbac.authorization.k8s.io/ccloud-messaging-topology-operator-metrics-reader unchanged
+clusterrole.rbac.authorization.k8s.io/ccloud-messaging-topology-operator-proxy-role unchanged
+rolebinding.rbac.authorization.k8s.io/ccloud-messaging-topology-operator-leader-election-rolebinding unchanged
+clusterrolebinding.rbac.authorization.k8s.io/ccloud-messaging-topology-operator-manager-rolebinding unchanged
+clusterrolebinding.rbac.authorization.k8s.io/ccloud-messaging-topology-operator-proxy-rolebinding unchanged
+configmap/ccloud-messaging-topology-operator-manager-config unchanged
+service/ccloud-messaging-topology-operator-ctrl-service unchanged
+deployment.apps/ccloud-messaging-topology-operator-controller-manager unchanged
