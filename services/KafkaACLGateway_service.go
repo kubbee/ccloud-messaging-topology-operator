@@ -1,8 +1,11 @@
 package services
 
-import "github.com/Azure/go-autorest/logger"
+import (
+	"github.com/go-logr/logr"
+	util "github.com/kubbee/ccloud-messaging-topology-operator/internal"
+)
 
-func BuildACL(sa, authorize, operation, cluster string, logger *logger.Filter){
-	
-
+// BuildACL call the service to create KafkaACL
+func BuildACL(r *util.ACLRequest, logger *logr.Logger) (bool, error) {
+	return createACL(r, logger)
 }
