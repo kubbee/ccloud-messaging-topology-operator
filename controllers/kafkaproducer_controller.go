@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -89,9 +90,13 @@ func (r *KafkaProducerReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 func (r *KafkaProducerReconciler) produceTopic(ctx context.Context, req ctrl.Request, kafkaProducer *messagesv1alpha1.KafkaProducer) (ctrl.Result, error) {
 	logger := ctrl.LoggerFrom(ctx)
 
+	logger.Info("Reading Credentials")
 	if connCreds := r.readCredentials(ctx, req.NamespacedName.Namespace, kafkaProducer.Spec.KafkaReferenceResource.Name, 1); connCreds != nil {
+
+		logger.Info("Recovered Credentials")
 		// Struct configMap
 		configMap := &corev1.ConfigMap{}
+
 		if getError := r.Get(ctx, types.NamespacedName{Name: kafkaProducer.Name, Namespace: kafkaProducer.Namespace}, configMap); getError != nil {
 			if k8sErrors.IsNotFound(getError) {
 				logger.Info("Creating kafka topic")
@@ -144,9 +149,20 @@ func (r *KafkaProducerReconciler) readCredentials(ctx context.Context, namespace
 
 	secret := &corev1.Secret{}
 
-	if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: secretName}, secret); err != nil {
-		logger.Error(err, "error to read crentials from cluster")
-		return nil
+	for a := 1; a <= 3; a++ {
+
+		if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: secretName}, secret); err != nil {
+
+			time.Sleep(time.Duration(8*a) * time.Second)
+
+			if a == 3 {
+				logger.Error(err, "error to read crentials from cluster")
+				return nil
+			}
+
+		} else {
+			break
+		}
 	}
 
 	return cross.GetKafkaCredentials(secret, secretType, &logger)

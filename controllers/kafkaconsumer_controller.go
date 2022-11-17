@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"errors"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -136,9 +137,20 @@ func (r *KafkaConsumerReconciler) readCredentials(ctx context.Context, namespace
 
 	secret := &corev1.Secret{}
 
-	if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: secretName}, secret); err != nil {
-		logger.Error(err, "error to read crentials from cluster")
-		return nil
+	for a := 1; a <= 3; a++ {
+
+		if err := r.Get(ctx, types.NamespacedName{Namespace: namespace, Name: secretName}, secret); err != nil {
+
+			time.Sleep(time.Duration(8*a) * time.Second)
+
+			if a == 3 {
+				logger.Error(err, "error to read crentials from cluster")
+				return nil
+			}
+
+		} else {
+			break
+		}
 	}
 
 	return cross.GetKafkaCredentials(secret, secretType, &logger)

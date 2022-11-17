@@ -1,0 +1,22 @@
+apiVersion: messages.kubbee.tech/v1alpha1
+kind: KafkaReference
+metadata:
+  name: kafkareference-ribas-teste-tres
+spec:
+  clusterName: devel
+  environment: odin
+  tenant: odin
+  kafkaClusterResource: 
+    namespace: ccloud-cluster-operator-system
+---
+apiVersion: messages.kubbee.tech/v1alpha1
+kind: KafkaProducer
+metadata:
+  name: kafkaproducer-ribas-teste-tres
+spec:
+  topic: ribas-teste-tres
+  partitions: 6
+  kafkaClusterResource: 
+    namespace: ccloud-cluster-operator-system
+  kafkaReferenceResource:
+    name: kafkareference-ribas-teste-tres

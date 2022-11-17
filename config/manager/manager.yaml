@@ -32,7 +32,7 @@ spec:
         - /manager/runner
         args:
         - --leader-elect
-        image: docker.io/kubbee/ccloud-messaging-topology-operator:v0.0.3
+        image: docker.io/kubbee/ccloud-messaging-topology-operator:v0.0.8
         name: manager
         lifecycle:
           postStart:
@@ -40,9 +40,9 @@ spec:
               command: ["/bin/sh", "-c", "/manager/setup"]
         env:
         - name: CCLOUD_EMAIL
-          value: 
+          value: <CCLOUD_EMAIL>
         - name: CCLOUD_PASSWORD
-          value: 
+          value: <CCLOUD_PASSWORD>
         securityContext:
           allowPrivilegeEscalation: true
         livenessProbe:
@@ -64,7 +64,7 @@ spec:
             cpu: 500m
             memory: 128Mi
           requests:
-            cpu: 10m
+            cpu: 100m
             memory: 64Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

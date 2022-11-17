@@ -1,7 +1,7 @@
 apiVersion: messages.kubbee.tech/v1alpha1
 kind: KafkaReference
 metadata:
-  name: kafkareference-odin
+  name: kafkareference-ribas-teste
 spec:
   clusterName: devel
   environment: odin
