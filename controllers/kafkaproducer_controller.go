@@ -44,12 +44,6 @@ type KafkaProducerReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-type ccdloudSecretType struct {
-	Cluster        string
-	Kafka          string
-	SchemaRegistry string
-}
-
 //+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkaproducers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkaproducers/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=messages.kubbee.tech,resources=kafkaproducers/finalizers,verbs=update
