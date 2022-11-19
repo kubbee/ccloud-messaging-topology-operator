@@ -93,29 +93,32 @@ func (r *KafkaConsumerReconciler) consumeTopic(ctx context.Context, req ctrl.Req
 				if tenant, x := connCreds.Data("tenant"); x {
 					if clusterId, y := connCreds.Data("clusterId"); y {
 						if environmentId, z := connCreds.Data("environmentId"); z {
+							// the kafka secret and schemaregistry are created with base name on the environment
+							if environment, w := connCreds.Data("environment"); w {
 
-							topic := &util.ExistentTopic{
-								Tenant: string(tenant),
-								Topic:  kafkaConsumer.Spec.Topic,
-								Domain: kafkaConsumer.Spec.Domain,
-							}
+								topic := &util.ExistentTopic{
+									Tenant: string(tenant),
+									Topic:  kafkaConsumer.Spec.Topic,
+									Domain: kafkaConsumer.Spec.Domain,
+								}
 
-							if topic, err := services.RetrieveTopic(topic, string(environmentId), string(clusterId), &logger); err != nil {
-								logger.Error(err, "error to create topic")
-								return reconcile.Result{}, err
-							} else {
-								if connCredsKafka := r.readCredentials(ctx, kafkaConsumer.Spec.KafkaClusterResource.Namespace, "kafka-"+string(tenant), 2); connCredsKafka != nil {
-									if connCredsSR := r.readCredentials(ctx, kafkaConsumer.Spec.KafkaClusterResource.Namespace, "schemaregistry-"+string(tenant), 3); connCredsSR != nil {
-										if cfg, err := business.GetConfigMap(connCredsKafka, connCredsSR, kafkaConsumer.Name, kafkaConsumer.Namespace, *topic); err != nil {
-										} else {
+								if topic, err := services.RetrieveTopic(topic, string(environmentId), string(clusterId), &logger); err != nil {
+									logger.Error(err, "error to create topic")
+									return reconcile.Result{}, err
+								} else {
+									if connCredsKafka := r.readCredentials(ctx, kafkaConsumer.Spec.KafkaClusterResource.Namespace, "kafka-"+string(environment), 2); connCredsKafka != nil {
+										if connCredsSR := r.readCredentials(ctx, kafkaConsumer.Spec.KafkaClusterResource.Namespace, "schemaregistry-"+string(environment), 3); connCredsSR != nil {
+											if cfg, err := business.GetConfigMap(connCredsKafka, connCredsSR, kafkaConsumer.Name, kafkaConsumer.Namespace, *topic); err != nil {
+											} else {
 
-											if e := r.Create(ctx, cfg); e != nil {
-												logger.Error(e, "error to create configmap")
-												return reconcile.Result{}, e
+												if e := r.Create(ctx, cfg); e != nil {
+													logger.Error(e, "error to create configmap")
+													return reconcile.Result{}, e
+												}
+
+												logger.Info("success the topic was configured")
+												return reconcile.Result{}, nil
 											}
-
-											logger.Info("success the topic was configured")
-											return reconcile.Result{}, nil
 										}
 									}
 								}

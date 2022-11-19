@@ -112,6 +112,7 @@ func (r *KafkaReferenceReconciler) declareClusterReference(ctx context.Context, 
 
 					kafkaReferenceSecret := &util.KafkaReferenceSecret{
 						EnvironmentId: string(environmentId),
+						Environment:   ccloudKafkaReference.Spec.Environment,
 						Tenant:        ccloudKafkaReference.Spec.Tenant,
 						ClusterId:     clusterId,
 					}
@@ -153,7 +154,7 @@ func (r *KafkaReferenceReconciler) generateSecret(krs *util.KafkaReferenceSecret
 			Labels:    labels,
 		},
 		Type:      "kubbee.tech/cluster-connection-reference",
-		Data:      map[string][]byte{"tenant": []byte(krs.Tenant), "clusterId": []byte(krs.ClusterId), "environmentId": []byte(krs.EnvironmentId)},
+		Data:      map[string][]byte{"tenant": []byte(krs.Tenant), "clusterId": []byte(krs.ClusterId), "environmentId": []byte(krs.EnvironmentId), "environment": []byte(krs.Environment)},
 		Immutable: &immutable,
 	}
 }

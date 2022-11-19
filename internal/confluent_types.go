@@ -3,6 +3,7 @@ package internal
 type KafkaReferenceSecret struct {
 	ClusterId     string `json:"clusterId"`
 	EnvironmentId string `json:"environmentId"`
+	Environment   string `json:"environment"`
 	Tenant        string `json:"tenant"`
 }
 

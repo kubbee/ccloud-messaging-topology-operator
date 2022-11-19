@@ -98,30 +98,33 @@ func (r *KafkaProducerReconciler) produceTopic(ctx context.Context, req ctrl.Req
 				if tenant, x := connCreds.Data("tenant"); x {
 					if clusterId, y := connCreds.Data("clusterId"); y {
 						if environmentId, z := connCreds.Data("environmentId"); z {
+							// the kafka secret and schemaregistry are created with base name on the environment
+							if environment, w := connCreds.Data("environment"); w {
 
-							topic := &util.NewTopic{
-								Tenant:     string(tenant),
-								Topic:      kafkaProducer.Spec.Topic,
-								Partitions: strconv.FormatInt(int64(kafkaProducer.Spec.Partitions), 10),
-								Namespace:  req.NamespacedName.Namespace,
-							}
+								topic := &util.NewTopic{
+									Tenant:     string(tenant),
+									Topic:      kafkaProducer.Spec.Topic,
+									Partitions: strconv.FormatInt(int64(kafkaProducer.Spec.Partitions), 10),
+									Namespace:  req.NamespacedName.Namespace,
+								}
 
-							if topic, err := services.BuildTopic(topic, string(environmentId), string(clusterId), &logger); err != nil {
-								logger.Error(err, "error to create topic")
-								return reconcile.Result{}, err
-							} else {
-								if connCredsKafka := r.readCredentials(ctx, kafkaProducer.Spec.KafkaClusterResource.Namespace, "kafka-"+string(tenant), 2); connCredsKafka != nil {
-									if connCredsSR := r.readCredentials(ctx, kafkaProducer.Spec.KafkaClusterResource.Namespace, "schemaregistry-"+string(tenant), 3); connCredsSR != nil {
-										if cfg, err := business.GetConfigMap(connCredsKafka, connCredsSR, kafkaProducer.Name, kafkaProducer.Namespace, *topic); err != nil {
-										} else {
+								if topic, err := services.BuildTopic(topic, string(environmentId), string(clusterId), &logger); err != nil {
+									logger.Error(err, "error to create topic")
+									return reconcile.Result{}, err
+								} else {
+									if connCredsKafka := r.readCredentials(ctx, kafkaProducer.Spec.KafkaClusterResource.Namespace, "kafka-"+string(environment), 2); connCredsKafka != nil {
+										if connCredsSR := r.readCredentials(ctx, kafkaProducer.Spec.KafkaClusterResource.Namespace, "schemaregistry-"+string(environment), 3); connCredsSR != nil {
+											if cfg, err := business.GetConfigMap(connCredsKafka, connCredsSR, kafkaProducer.Name, kafkaProducer.Namespace, *topic); err != nil {
+											} else {
 
-											if e := r.Create(ctx, cfg); e != nil {
-												logger.Error(e, "error to create configmap")
-												return reconcile.Result{}, e
+												if e := r.Create(ctx, cfg); e != nil {
+													logger.Error(e, "error to create configmap")
+													return reconcile.Result{}, e
+												}
+
+												logger.Info("success the topic was configured")
+												return reconcile.Result{}, nil
 											}
-
-											logger.Info("success the topic was configured")
-											return reconcile.Result{}, nil
 										}
 									}
 								}
