@@ -92,12 +92,17 @@ func (r *KafkaProducerReconciler) produceTopic(ctx context.Context, req ctrl.Req
 		configMap := &corev1.ConfigMap{}
 
 		if getError := r.Get(ctx, types.NamespacedName{Name: kafkaProducer.Name, Namespace: kafkaProducer.Namespace}, configMap); getError != nil {
+
 			if k8sErrors.IsNotFound(getError) {
+
 				logger.Info("Creating kafka topic")
 				// Read secret attributes
 				if tenant, x := connCreds.Data("tenant"); x {
 					if clusterId, y := connCreds.Data("clusterId"); y {
 						if environmentId, z := connCreds.Data("environmentId"); z {
+
+							logger.Info("Reding environment from secret")
+
 							// the kafka secret and schemaregistry are created with base name on the environment
 							if environment, w := connCreds.Data("environment"); w {
 

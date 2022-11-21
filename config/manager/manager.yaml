@@ -32,7 +32,7 @@ spec:
         - /manager/runner
         args:
         - --leader-elect
-        image: docker.io/kubbee/ccloud-messaging-topology-operator:v1.0.1
+        image: docker.io/kubbee/ccloud-messaging-topology-operator:v1.0.2
         name: manager
         lifecycle:
           postStart:

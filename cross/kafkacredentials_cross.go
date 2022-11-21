@@ -37,6 +37,7 @@ func readCredentialsFromKubernetesSecret(secret *corev1.Secret) *util.ClusterCre
 			"tenant":        secret.Data["tenant"],
 			"clusterId":     secret.Data["clusterId"],
 			"environmentId": secret.Data["environmentId"],
+			"environment":   secret.Data["environment"],
 		},
 	}
 }
