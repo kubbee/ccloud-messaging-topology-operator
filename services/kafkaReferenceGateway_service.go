@@ -9,7 +9,7 @@ import (
 func BuildKafkaReference(environmentId string, clusterName string, logger *logr.Logger) (string, error) {
 	logger.Info("start::BuildKafkaReference")
 
-	success, err := setEnvironment(environmentId, logger)
+	success, err := setEnvironment(environmentId)
 
 	if err != nil {
 		logger.Error(err, "error to select the environment")
@@ -17,7 +17,7 @@ func BuildKafkaReference(environmentId string, clusterName string, logger *logr.
 	}
 
 	if success {
-		return getKafkaCluster(clusterName, logger)
+		return getKafkaCluster(clusterName)
 	} else {
 		e := errors.New("there was an error to select the environment")
 		logger.Error(e, "BuildKafkaReference::"+e.Error())
