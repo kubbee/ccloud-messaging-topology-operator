@@ -32,7 +32,7 @@ spec:
         - /manager/runner
         args:
         - --leader-elect
-        image: docker.io/kubbee/ccloud-messaging-topology-operator:v1.0.2
+        image: docker.io/kubbee/ccloud-messaging-topology-operator:v1.0.3
         name: manager
         lifecycle:
           postStart:
@@ -40,9 +40,9 @@ spec:
               command: ["/bin/sh", "-c", "/manager/setup"]
         env:
         - name: CCLOUD_EMAIL
-          value: 
+          value: ccloud-account-email
         - name: CCLOUD_PASSWORD
-          value: 
+          value: ccloud-account-password
         securityContext:
           allowPrivilegeEscalation: true
         livenessProbe:
